@@ -1,0 +1,6 @@
+from fastapi import APIRouter
+
+from interface import i_signup
+'''router information'''
+router = APIRouter()
+router.include_router(i_signup.router)
