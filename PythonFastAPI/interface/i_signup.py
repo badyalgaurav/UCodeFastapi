@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException,Form, UploadFile, File, BackgroundTas
 from passlib.hash import bcrypt
 from pymongo import MongoClient
 from fastapi.responses import StreamingResponse, FileResponse
-from bson import ObjectId
+from bson import ObjectId, json_util
 import io, json
 import pandas as pd
 from pymongo.errors import DuplicateKeyError
@@ -150,6 +150,25 @@ async def view_videos_textfiles(user_id: str):
         video_data = video_file.read()
 
     return StreamingResponse(io.BytesIO(video_data), media_type="video/mp4")
+
+@router.get("/contents_list")
+async def get_contents_list(user_id: str, class_id: str):
+    user = ObjectId(user_id)
+    classid = ObjectId(class_id)
+    contents = { 
+        "userId": user,
+        "classId": classid       
+    }
+    cursor = contents_collection.find(contents)
+    df =  pd.DataFrame(list(cursor))
+    df["_id"]=df["_id"].astype(str)
+    df["userId"]=df["userId"].astype(str)
+    df["classId"]=df["classId"].astype(str)
+    parsed_df = json.loads(df.to_json(orient="records"))
+    return {"data": parsed_df}
+
+    
+
 
 
     
