@@ -17,7 +17,7 @@ MONGODB_CONN_STR = settings.MONGODB_CONN_STR
 client = MongoClient(MONGODB_CONN_STR)
 
 # database
-db = client["apidb"]
+db = client["UUAABBCC"]
 
 # collections
 users_collection = db["users"]
@@ -55,7 +55,7 @@ async def signup(username: str, first_name:str, last_name: str, password: str, e
         "passwordHash": password_hash, 
         "emailId": email_id, 
         "phoneNumber": phone_number, 
-        "classId": class_id, 
+        "classId": ObjectId(class_id), 
         "accountId": account_id
         }
 
@@ -70,7 +70,7 @@ async def signup(username: str, first_name:str, last_name: str, password: str, e
 @router.get("/login")
 async def login(username: str, password: str):
     user = users_collection.find_one({"userName": username})
-
+    user_list = [user]
     if user and bcrypt.verify(password, user["passwordHash"]):
         # Fetch the user's content_id (foreign key)
         content_id = user.get("contentId")
@@ -105,6 +105,12 @@ async def login(username: str, password: str):
             df["_id"]=df["_id"].astype(str)
             parsed_df = json.loads(df.to_json(orient="records"))
             return {"Message": "Login Successful", "data": parsed_df}
+        df = pd.DataFrame(user_list)
+        df["_id"]=df["_id"].astype(str)
+        df["classId"]=df["classId"].astype(str) 
+        df=df.drop(["passwordHash"], axis=1)
+        parsed_df = json.loads(df.to_json(orient="records"))
+        return {"data": parsed_df, "Message": "No available contents for the user", }
     raise HTTPException(status_code=401, detail="Invalid username or password")
 
 
