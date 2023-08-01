@@ -6,9 +6,11 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(debug=True)
 
+
 @app.on_event("startup")
 async def startup():
     print("startup")
+
 
 @app.on_event("shutdown")
 async def shutdown():
