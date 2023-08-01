@@ -209,7 +209,7 @@ async def get_class_list():
 
 # Endpoint for inserting notes
 @router.post("/insert_notes")
-async def insert_notes(content: str, header: str, user_id: str, content_id: str, is_active: bool):
+async def insert_notes(content: str, header: str, user_id: str, content_id: str,duration:str):
     # Get the current date and time
     timestamp = datetime.datetime.utcnow()
 
@@ -218,7 +218,8 @@ async def insert_notes(content: str, header: str, user_id: str, content_id: str,
         "header": header,
         "userId": ObjectId(user_id),
         "contentId": ObjectId(content_id),
-        "isActive": is_active,
+        "duration":duration,
+        "isActive": True,
         "timestamp": timestamp
     }
 
