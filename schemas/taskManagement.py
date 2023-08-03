@@ -1,3 +1,4 @@
+from fastapi import UploadFile,File
 from pydantic import BaseModel
 from typing import Optional
 
@@ -5,7 +6,9 @@ from typing import Optional
 class TaskManagement(BaseModel):
     userId: str
     classId: str
-    textFilePath: Optional[str] = None
+    videoPath: Optional[str] = None
     text: Optional[str] = None
+    taskName: Optional[str] = None
+
     
     

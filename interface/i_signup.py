@@ -11,6 +11,7 @@ from pymongo.errors import DuplicateKeyError
 from config import settings
 from schemas.taskManagement import TaskManagement
 from typing import Optional, List
+import os
 router = APIRouter(prefix="/user_content_management", tags=["Authentication"])
 
 MONGODB_CONN_STR = settings.MONGODB_CONN_STR
@@ -27,19 +28,24 @@ accounts_collection = db["accounts"]
 contents_collection = db["contents"]
 class_collection = db["class"]
 notes_collection = db["notes"]
-video_path = None
-text_path = None
+# video_path = None
+# text_path = None
 
 
 async def background_work(video: UploadFile):
-    global video_path
+    # global video_path
     # Save the uploaded video and text file to a specific directory
-    video_path = f"C:/Users/HIMANI/Desktop/{video.filename}"
-
-    with open(video_path, "wb") as video_file:
-        video_file.write(await video.read())
-    return {"video stored please run next api", video_path}
-
+    try:
+        video_path = f"/var/www/"
+        
+        if not os.path.exists(video_path):
+            os.makedirs(video_path)
+        video_path_video = f"/var/www/{video.filename}"
+        with open(video_path_video, "wb") as video_file: 
+            video_file.write(await video.read())
+        return {"video_path":video_path_video}
+    except Exception as e:
+        return {"video_path":""}
 # Endpoint for user signup
 
 
@@ -89,33 +95,39 @@ async def login(email: str, password: str):
 
 # Endpoint for inserting a video (schedules the background task)
 @router.post("/insert_video")
-async def insert_video(background_tasks: BackgroundTasks, video: UploadFile):
-    background_tasks.add_task(background_work, video)
-    # return {"message": "Notification sent in the background"}
+async def insert_video(video: UploadFile):
+    res=await background_work(video)
+    return res
 
+async def insert_task_info_bg(model:TaskManagement):
+    try:
+        # video_path= await background_work(video=video)
+        user_id = ObjectId(model.userId)
+        class_id = ObjectId(model.classId)
+        # global video_path
+        # global text_path
+        contents = { 
+            "userId": user_id,
+            "classId": class_id,
+            "textFilePath": None,
+            "text": model.text,
+            "videoPath": model.videoPath,        
+            "taskName": model.taskName,        
+        }
+        #insert the document into contents collection
+        result = contents_collection.insert_one(contents)
+
+        # Get the inserted _id from the result object
+        # content_id = result.inserted_id
+     
+        return "sucess"
+    except:
+        return "failure"
 # Endpoint for inserting task information
-
-
 @router.post("/insert_task_info")
-async def insert_task_info(model: TaskManagement):
-    user_id = ObjectId(model.userId)
-    class_id = ObjectId(model.classId)
-    global video_path
-    global text_path
-    contents = {
-        "userId": user_id,
-        "classId": class_id,
-        "textFilePath": text_path,
-        "text": model.text,
-        "videoPath": video_path,
-    }
-    # insert the document into contents collection
-    result = contents_collection.insert_one(contents)
-
-    # Get the inserted _id from the result object
-    content_id = result.inserted_id
-
-    return {"message": "Inserted Successfully", "_id": str(content_id)}
+async def insert_task_info(model:TaskManagement):
+    res=await insert_task_info_bg(model)
+    return {"message": res}
     # return {"message": "Notification sent in the background"}
 
 
@@ -166,6 +178,25 @@ async def get_contents_list(user_id: str, class_id: Optional[str] = None):
     else:
         return {"data": []}
 
+# Endpoint for getting a list of contents based on user ID and optional class ID
+@router.get("/content_by_id")
+async def get_contents_by_id(content_id: str):
+
+    content_id = ObjectId(content_id)
+    filter = {
+        "_id": content_id
+    }
+
+    cursor = contents_collection.find_one(filter)
+    df =cursor
+    if df:
+        df["_id"] = str(df["_id"])
+        df["userId"] = str(df["userId"])
+        df["classId"] = str(df["classId"])
+        return {"data": df}
+    else:
+        return {"data": []}
+
 # Endpoint for getting a list of classes
 
 
@@ -181,7 +212,7 @@ async def get_class_list():
 
 
 @router.post("/insert_notes")
-async def insert_notes(content: str, header: str, user_id: str, content_id: str, is_active: bool):
+async def insert_notes(content: str, header: str, user_id: str, content_id: str,duration:str):
     # Get the current date and time
     timestamp = datetime.datetime.utcnow()
 
@@ -190,7 +221,8 @@ async def insert_notes(content: str, header: str, user_id: str, content_id: str,
         "header": header,
         "userId": ObjectId(user_id),
         "contentId": ObjectId(content_id),
-        "isActive": is_active,
+        "duration":duration,
+        "isActive": True,
         "timestamp": timestamp
     }
 
@@ -227,3 +259,9 @@ async def delete_notes(note_id: str):
     )
 
     return {"Deleted Successfully"}
+
+@router.get("/video")
+async def get_video(video_path):
+    # Replace 'path_to_video.mp4' with the actual path to your video file.
+    # video_path = "/var/www/1.mp4"
+    return FileResponse(video_path, media_type="video/mp4")
