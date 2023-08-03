@@ -10,6 +10,7 @@ from pymongo.errors import DuplicateKeyError
 from config import settings
 from schemas.taskManagement import TaskManagement
 from typing import Optional, List
+import os
 router = APIRouter(prefix="/user_content_management", tags=["Authentication"])
 
 MONGODB_CONN_STR = settings.MONGODB_CONN_STR
@@ -26,18 +27,23 @@ accounts_collection = db["accounts"]
 contents_collection = db["contents"]
 class_collection = db["class"]
 notes_collection = db["notes"]
-video_path = None
-text_path = None
+# video_path = None
+# text_path = None
 
 async def background_work(video: UploadFile):
-    global video_path
+    # global video_path
     # Save the uploaded video and text file to a specific directory
-    video_path = f"C:/Users/HIMANI/Desktop/{video.filename}"
-
-    with open(video_path, "wb") as video_file: 
-        video_file.write(await video.read())
-    return {"video stored please run next api" ,video_path}
-
+    try:
+        video_path = f"/var/www/"
+        
+        if not os.path.exists(video_path):
+            os.makedirs(video_path)
+        video_path_video = f"/var/www/{video.filename}"
+        with open(video_path_video, "wb") as video_file: 
+            video_file.write(await video.read())
+        return {"video_path":video_path}
+    except Exception as e:
+        return {"video_path":""}
 # Endpoint for user signup
 @router.post("/signup")
 async def signup(username: str, first_name:str, last_name: str, password: str, email_id: str, phone_number: int, class_id: str, account_id: str):
@@ -133,30 +139,37 @@ async def login(username: str, password: str):
 # Endpoint for inserting a video (schedules the background task)
 @router.post("/insert_video")
 async def insert_video(background_tasks:BackgroundTasks, video: UploadFile):
-    background_tasks.add_task(background_work, video)
-    # return {"message": "Notification sent in the background"}
+    background_tasks.add_task(background_work, background_work,video)
+    return {"message": "Notification sent in the background"}
 
+async def insert_task_info_bg(user_id:str,class_id:str,text:str,video: UploadFile):
+    try:
+        video_path= await background_work(video=video)
+        user_id = ObjectId(user_id)
+        class_id = ObjectId(class_id)
+        # global video_path
+        # global text_path
+        contents = { 
+            "userId": user_id,
+            "classId": class_id,
+            "textFilePath": None,
+            "text": text,
+            "videoPath": video_path,        
+        }
+        #insert the document into contents collection
+        result = contents_collection.insert_one(contents)
+
+        # Get the inserted _id from the result object
+        # content_id = result.inserted_id
+     
+        return "sucess"
+    except:
+        return "failure"
 # Endpoint for inserting task information
 @router.post("/insert_task_info")
-async def insert_task_info(model: TaskManagement):
-    user_id = ObjectId(model.userId)
-    class_id = ObjectId(model.classId)
-    global video_path
-    global text_path
-    contents = { 
-        "userId": user_id,
-        "classId": class_id,
-        "textFilePath": text_path,
-        "text": model.text,
-        "videoPath": video_path,        
-    }
-    #insert the document into contents collection
-    result = contents_collection.insert_one(contents)
-
-     # Get the inserted _id from the result object
-    content_id = result.inserted_id
-     
-    return {"message": "Inserted Successfully", "_id": content_id}
+async def insert_task_info(background_tasks:BackgroundTasks,user_id:str,class_id:str,text:str,video: UploadFile):
+    background_tasks.add_task(insert_task_info_bg,user_id,class_id,text,video)
+    return {"message": "Inserted Successfully"}
     # return {"message": "Notification sent in the background"}
 
 
