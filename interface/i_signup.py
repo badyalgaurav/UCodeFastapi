@@ -26,6 +26,7 @@ db = client["UUAABBCC"]
 users_collection = db["users"]
 accounts_collection = db["accounts"]
 contents_collection = db["contents"]
+draft_collection = db["draftContents"]
 class_collection = db["class"]
 notes_collection = db["notes"]
 # video_path = None
@@ -37,15 +38,15 @@ async def background_work(video: UploadFile):
     # Save the uploaded video and text file to a specific directory
     try:
         video_path = f"/var/www/"
-        
+
         if not os.path.exists(video_path):
             os.makedirs(video_path)
         video_path_video = f"/var/www/{video.filename}"
-        with open(video_path_video, "wb") as video_file: 
+        with open(video_path_video, "wb") as video_file:
             video_file.write(await video.read())
-        return {"video_path":video_path_video}
+        return {"video_path": video_path_video}
     except Exception as e:
-        return {"video_path":""}
+        return {"video_path": ""}
 # Endpoint for user signup
 
 
@@ -96,37 +97,40 @@ async def login(email: str, password: str):
 # Endpoint for inserting a video (schedules the background task)
 @router.post("/insert_video")
 async def insert_video(video: UploadFile):
-    res=await background_work(video)
+    res = await background_work(video)
     return res
 
-async def insert_task_info_bg(model:TaskManagement):
+
+async def insert_task_info_bg(model: TaskManagement):
     try:
         # video_path= await background_work(video=video)
         user_id = ObjectId(model.userId)
         class_id = ObjectId(model.classId)
         # global video_path
         # global text_path
-        contents = { 
+        contents = {
             "userId": user_id,
             "classId": class_id,
             "textFilePath": None,
             "text": model.text,
-            "videoPath": model.videoPath,        
-            "taskName": model.taskName,        
+            "videoPath": model.videoPath,
+            "taskName": model.taskName,
         }
-        #insert the document into contents collection
+        # insert the document into contents collection
         result = contents_collection.insert_one(contents)
 
         # Get the inserted _id from the result object
         # content_id = result.inserted_id
-     
+
         return "sucess"
     except:
         return "failure"
 # Endpoint for inserting task information
+
+
 @router.post("/insert_task_info")
-async def insert_task_info(model:TaskManagement):
-    res=await insert_task_info_bg(model)
+async def insert_task_info(model: TaskManagement):
+    res = await insert_task_info_bg(model)
     return {"message": res}
     # return {"message": "Notification sent in the background"}
 
@@ -178,7 +182,73 @@ async def get_contents_list(user_id: str, class_id: Optional[str] = None):
     else:
         return {"data": []}
 
+# Endpoint for getting a list of contents based on class ID
+
+
+@router.get("/contents_list_by_class_id")
+async def contents_list_by_class_id(class_id: str):
+
+    classid = ObjectId(class_id)
+    contents = {
+        "classId": classid
+    }
+
+    cursor = contents_collection.find(contents)
+    df = pd.DataFrame(list(cursor))
+    if not df.empty:
+        df["_id"] = df["_id"].astype(str)
+        df["userId"] = df["userId"].astype(str)
+        df["classId"] = df["classId"].astype(str)
+        parsed_df = json.loads(df.to_json(orient="records"))
+        return {"data": parsed_df}
+    else:
+        return {"data": []}
+
+# Endpoint for getting a list of draft based on user ID
+
+
+@router.get("/draft_list_by_user_id")
+async def contents_list_by_class_id(userId: str):
+
+    userId = ObjectId(userId)
+    contents = {
+        "userId": userId
+    }
+
+    cursor = draft_collection.find(contents)
+    df = pd.DataFrame(list(cursor))
+    if not df.empty:
+        df["_id"] = df["_id"].astype(str)
+        df["userId"] = df["userId"].astype(str)
+        df["classId"] = df["classId"].astype(str)
+        parsed_df = json.loads(df.to_json(orient="records"))
+        return {"data": parsed_df}
+    else:
+        return {"data": []}
+
+# Endpoint for getting a list of draft based on user ID
+
+
+@router.get("/get_draft_by_id")
+async def get_draft_by_id(draftId: str):
+
+    _id = ObjectId(draftId)
+    contents = {
+        "_id": _id
+    }
+    cursor = draft_collection.find_one(contents)
+    df = cursor
+    if df:
+        df["_id"] = str(df["_id"])
+        df["userId"] = str(df["userId"])
+        df["classId"] = str(df["classId"])
+        return {"data": df}
+    else:
+        return {"data": []}
+
 # Endpoint for getting a list of contents based on user ID and optional class ID
+
+
 @router.get("/content_by_id")
 async def get_contents_by_id(content_id: str):
 
@@ -188,7 +258,7 @@ async def get_contents_by_id(content_id: str):
     }
 
     cursor = contents_collection.find_one(filter)
-    df =cursor
+    df = cursor
     if df:
         df["_id"] = str(df["_id"])
         df["userId"] = str(df["userId"])
@@ -212,7 +282,7 @@ async def get_class_list():
 
 
 @router.post("/insert_notes")
-async def insert_notes(content: str, header: str, user_id: str, content_id: str,duration:str):
+async def insert_notes(content: str, header: str, user_id: str, content_id: str, duration: str):
     # Get the current date and time
     timestamp = datetime.datetime.utcnow()
 
@@ -221,7 +291,7 @@ async def insert_notes(content: str, header: str, user_id: str, content_id: str,
         "header": header,
         "userId": ObjectId(user_id),
         "contentId": ObjectId(content_id),
-        "duration":duration,
+        "duration": duration,
         "isActive": True,
         "timestamp": timestamp
     }
@@ -259,6 +329,7 @@ async def delete_notes(note_id: str):
     )
 
     return {"Deleted Successfully"}
+
 
 @router.get("/video")
 async def get_video(video_path):
