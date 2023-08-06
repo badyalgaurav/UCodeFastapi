@@ -115,6 +115,7 @@ async def insert_task_info_bg(model: TaskManagement):
             "text": model.text,
             "videoPath": model.videoPath,
             "taskName": model.taskName,
+            "description":model.description
         }
         # insert the document into contents collection
         result = contents_collection.insert_one(contents)

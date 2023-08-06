@@ -9,6 +9,7 @@ class TaskManagement(BaseModel):
     videoPath: Optional[str] = None
     text: Optional[str] = None
     taskName: Optional[str] = None
+    description:Optional[str]=None
 
     
     
