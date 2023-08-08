@@ -20,4 +20,4 @@ class SubmitTask(BaseModel):
     submittedDate:Optional[str] = None
     score:Optional[str] = None
     text: Optional[str] = None
-    isActive:Optional[bool]=True
+    
