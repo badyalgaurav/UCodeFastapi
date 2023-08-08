@@ -13,3 +13,10 @@ class TaskManagement(BaseModel):
 
     
     
+class SubmitTask(BaseModel):
+    userId: Optional[str] = None
+    classId: Optional[str] = None
+    contentId:Optional[str] = None
+    submittedDate:Optional[str] = None
+    score:Optional[str] = None
+    text: Optional[str] = None

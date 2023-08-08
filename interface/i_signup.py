@@ -9,7 +9,7 @@ import json
 import pandas as pd
 from pymongo.errors import DuplicateKeyError
 from config import settings
-from schemas.taskManagement import TaskManagement
+from schemas.taskManagement import SubmitTask, TaskManagement
 from typing import Optional, List
 import os
 router = APIRouter(prefix="/user_content_management", tags=["Authentication"])
@@ -29,6 +29,8 @@ contents_collection = db["contents"]
 draft_collection = db["draftContents"]
 class_collection = db["class"]
 notes_collection = db["notes"]
+submit_assignment_collection = db["submitAssignment"]
+
 # video_path = None
 # text_path = None
 
@@ -209,7 +211,7 @@ async def contents_list_by_class_id(class_id: str):
 
 
 @router.get("/draft_list_by_user_id")
-async def contents_list_by_class_id(userId: str):
+async def draft_list_by_user_id(userId: str):
 
     userId = ObjectId(userId)
     contents = {
@@ -337,3 +339,43 @@ async def get_video(video_path):
     # Replace 'path_to_video.mp4' with the actual path to your video file.
     # video_path = "/var/www/1.mp4"
     return FileResponse(video_path, media_type="video/mp4")
+
+
+@router.delete("/delete_content")
+async def delete_content_by_id(content_id: str):
+
+    content_id = ObjectId(content_id)
+    filter = {
+        "_id": content_id
+    }
+
+    ack = contents_collection.delete_one(filter)
+    return "success"
+
+
+@router.post("/submit_assignment")
+async def submit_assignment(model: SubmitTask):
+    try:
+        # video_path= await background_work(video=video)
+        user_id = ObjectId(model.userId)
+        class_id = ObjectId(model.classId)
+        contentId = ObjectId(model.contentId)
+        # global video_path
+        # global text_path
+        contents = {
+            "userId": user_id,
+            "classId": class_id,
+            "contentId": contentId,
+            "text": model.text,
+            "submittedDate": str(datetime.datetime.utcnow()),
+            "score": "NA"
+        }
+        # insert the document into contents collection
+        result = submit_assignment_collection.insert_one(contents)
+
+        # Get the inserted _id from the result object
+        # content_id = result.inserted_id
+
+        return "sucess"
+    except:
+        return "failure"
