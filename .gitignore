@@ -26,3 +26,6 @@ archive.zip
 .*.sw?
 .cache
 **/__pycache__/
+
+*.pyc
+__pycache__/
