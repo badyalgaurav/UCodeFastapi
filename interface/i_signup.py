@@ -330,7 +330,6 @@ async def delete_notes(note_id: str):
         {"_id": ObjectId(note_id)},
         {"$set": {"isActive": False}}
     )
-
     return {"Deleted Successfully"}
 
 
