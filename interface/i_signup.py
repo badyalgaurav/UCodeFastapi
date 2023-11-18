@@ -8,14 +8,13 @@ import io
 import json
 import pandas as pd
 from pymongo.errors import DuplicateKeyError
-# from config import settings
+from config import settings
 from schemas.taskManagement import SubmitTask, TaskManagement
 from typing import Optional, List
 import os
 router = APIRouter(prefix="/user_content_management", tags=["Authentication"])
 
-MONGODB_CONN_STR ="mongodb://interx:interx%40504@server.interxlab.io:15115/admin"
-# settings.MONGODB_CONN_STR
+MONGODB_CONN_STR = settings.MONGODB_CONN_STR
 
 # Connection to MongoDB
 client = MongoClient(MONGODB_CONN_STR)
