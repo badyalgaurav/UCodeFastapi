@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
 from bson.objectid import ObjectId
-# from interface.interfaces import router as api_router
+from interface.interfaces import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(debug=True)
@@ -35,7 +35,7 @@ app.add_middleware(
     allow_credentials=True
 )
 
-# app.include_router(api_router)
+app.include_router(api_router)
 
 # if __name__ == '__main__':
 #     uvicorn.run("main:app",
