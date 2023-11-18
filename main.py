@@ -33,15 +33,15 @@ async def root():
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
 
-@app.get("/login")
-async def login(email: str, password: str):
-    user = users_collection.find_one({"emailId": email})
-    user["_id"] = str(user["_id"])
-    user["classId"] = str(user["classId"])
-    user_list = [user]
-    if user and bcrypt.verify(password, user["passwordHash"]):
-        return {"data": user, "Message": "success"}
-    raise HTTPException(status_code=401, detail="Invalid username or password")
+# @app.get("/login")
+# async def login(email: str, password: str):
+#     user = users_collection.find_one({"emailId": email})
+#     user["_id"] = str(user["_id"])
+#     user["classId"] = str(user["classId"])
+#     user_list = [user]
+#     if user and bcrypt.verify(password, user["passwordHash"]):
+#         return {"data": user, "Message": "success"}
+#     raise HTTPException(status_code=401, detail="Invalid username or password")
 
 @app.on_event("startup")
 async def startup():
