@@ -12,16 +12,16 @@ MONGODB_CONN_STR = "mongodb://interx:interx%40504@server.interxlab.io:15115/admi
 client = MongoClient(MONGODB_CONN_STR)
 
 # database
-db = client["UUAABBCC"]
+# db = client["UUAABBCC"]
 
-# collections
-users_collection = db["users"]
-accounts_collection = db["accounts"]
-contents_collection = db["contents"]
-draft_collection = db["draftContents"]
-class_collection = db["class"]
-notes_collection = db["notes"]
-submit_assignment_collection = db["submitAssignment"]
+# # collections
+# users_collection = db["users"]
+# accounts_collection = db["accounts"]
+# contents_collection = db["contents"]
+# draft_collection = db["draftContents"]
+# class_collection = db["class"]
+# notes_collection = db["notes"]
+# submit_assignment_collection = db["submitAssignment"]
 app = FastAPI(debug=True)
 
 @app.get("/")
@@ -33,6 +33,11 @@ async def root():
 async def say_hello(name: str):
     return {"message": f"Hello {name}"}
 
+
+
+@app.get("/hello32/{name}")
+async def say_hello(name: str):
+    return {"message": f"Hello {name}"}
 # @app.get("/login")
 # async def login(email: str, password: str):
 #     user = users_collection.find_one({"emailId": email})
