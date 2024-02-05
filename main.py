@@ -22,6 +22,7 @@ draft_collection = db["draftContents"]
 class_collection = db["class"]
 notes_collection = db["notes"]
 submit_assignment_collection = db["submitAssignment"]
+
 app = FastAPI(debug=True)
 
 @app.get("/")
