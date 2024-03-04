@@ -32,3 +32,4 @@ class CameraInfo(BaseModel):
     eAddress: Optional[str] = None
 
     cameraInfo: Optional[str] = None
+    aiPerSecondRatio: Optional[int] = None
