@@ -26,6 +26,7 @@ class CameraInfo(BaseModel):
     cEmail: Optional[str] = None
     cAddress: Optional[str] = None
     cPassword: Optional[str] = None
+    notificationEmails: Optional[str] = None
 
     eName: Optional[str] = None
     eEmail: Optional[str] = None

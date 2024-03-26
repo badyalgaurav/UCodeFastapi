@@ -16,6 +16,8 @@ def b_setup_registration(data: CameraInfo):
     d_dict = data.dict()
     parse_camera_info = json.loads(d_dict["cameraInfo"])
     d_dict["cameraInfo"] = parse_camera_info
+    d_dict["notificationEmails"] = d_dict.get("notificationEmails").split(",")
+    d_dict["notificationEmails"]=[x for x in d_dict["notificationEmails"] if x]
     d_dict["isActive"] = True
     d_dict["createdDateTime"] = datetime.datetime.now()
     # //convert to dict(data)
