@@ -8,6 +8,7 @@
     "routes": [
       {
         "src": "/(.*)",
+        "env":".env",
         "dest": "main.py"
       }
     ]

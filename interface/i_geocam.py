@@ -4,29 +4,41 @@ import datetime
 import json
 from schemas.taskManagement import CameraInfo
 import requests
+from config import settings
 router = APIRouter(prefix="/geocam", tags=["geocam"])
 MONGODB_CONN_STR = "mongodb://interx:interx%40504@server.interxlab.io:15115/admin"
-TELEGRAM_BOT_URL="https://api.telegram.org/bot6909174186:AAFDHzvd0EIrUyuzWcnx1-aUS0MZJjzsXOQ/getUpdates"
+TELEGRAM_BOT_URL=f"https://api.telegram.org/bot{settings.TELE_BOT_TOKEN}/getUpdates"
 # Connection to MongoDB
 client = MongoClient(MONGODB_CONN_STR)
 
 
-def b_setup_registration(data: CameraInfo):
+async def b_setup_registration(data: CameraInfo):
     # database
     db = client["UUAABBCC"]
     coll = db["accountInfo"]
     d_dict = data.dict()
     parse_camera_info = json.loads(d_dict["cameraInfo"])
     d_dict["cameraInfo"] = parse_camera_info
-    d_dict["notificationEmails"] = d_dict.get("notificationEmails").split(",")
-    d_dict["notificationEmails"] = [
-        x for x in d_dict["notificationEmails"] if x]
-    d_dict["isActive"] = True
-    d_dict["createdDateTime"] = datetime.datetime.now()
-    # //convert to dict(data)
-    coll.insert_one(d_dict)
-    return True
 
+    acc_alr_exists=coll.find_one({"cEmail":data.cEmail})
+    if acc_alr_exists:
+        return "account with same email already exists. Try different email for the customer."
+
+    channel_id= await get_tele_channel_id(telegram_group_name=data.telegramGroupName)
+    if channel_id:
+        already_exist_channel_ids=coll.count_documents({"channelId":channel_id})
+        if already_exist_channel_ids:
+            return "Telegram group with same channel id already exists."
+        
+        d_dict["channelId"] = channel_id
+        d_dict["telegramGroupName"] = data.telegramGroupName
+        d_dict["isActive"] = True
+        d_dict["createdDateTime"] = datetime.datetime.now()
+        # //convert to dict(data)
+        coll.insert_one(d_dict)
+        return "successfully inserted"
+    else:
+        return "Telegram group with the given name not created or the AI bot is never introduce in group."
 
 def b_get_camera_credentials(email: str, password: str):
     # database
@@ -40,8 +52,8 @@ def b_get_camera_credentials(email: str, password: str):
 @router.post("/setup_registration")
 async def setup_registration(data: CameraInfo):
     # send the data to mongodb
-    b_setup_registration(data)
-    return {"message": "Form submitted successfully"}
+    res=await b_setup_registration(data)
+    return {"status": res}
 
 
 @router.get("/get_camera_credentials")
@@ -51,7 +63,7 @@ async def get_camera_credentials(email: str, password: str):
     return res
 
 
-@router.get("/get_tele_channel_id")
+# @router.get("/get_tele_channel_id")
 async def get_tele_channel_id(telegram_group_name: str):
     res = 0
     api_url = TELEGRAM_BOT_URL
@@ -68,8 +80,7 @@ async def get_tele_channel_id(telegram_group_name: str):
             for item in data:
                 try:
                     if item.get("message").get("chat").get("title") == telegram_group_name:
-                        res = item.get("message").get("chat").get(
-                            "id")  # Return the JSON block if found
+                        res = item.get("message").get("chat").get("id")  # Return the channel id
                         break
                 except:
                     print("dictionary error")

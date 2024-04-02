@@ -3,7 +3,7 @@ from pydantic import BaseSettings
 
 
 class Settings(BaseSettings):
-    POSTGRES_CONN_STR: str
+    TELE_BOT_TOKEN: str
     MONGODB_CONN_STR: str
 
     # specify .env file location as Config attribute
