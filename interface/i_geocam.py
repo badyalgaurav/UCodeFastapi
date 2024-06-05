@@ -5,13 +5,21 @@ import json
 from schemas.taskManagement import CameraInfo
 import requests
 from config import settings
+import telegram
+from telegram.request import HTTPXRequest
+
 router = APIRouter(prefix="/geocam", tags=["geocam"])
 MONGODB_CONN_STR = "mongodb://interx:interx%40504@server.interxlab.io:15115/admin"
 TELEGRAM_BOT_URL=f"https://api.telegram.org/bot{settings.TELE_BOT_TOKEN}/getUpdates"
+
+
 # Connection to MongoDB
 client = MongoClient(MONGODB_CONN_STR)
+trequest = HTTPXRequest(connection_pool_size=20)
+bot = telegram.Bot(token=f'{settings.TELE_BOT_TOKEN}', request=trequest)
 
 
+TIMEOUT=100000
 async def b_setup_registration(data: CameraInfo):
     # database
     db = client["UUAABBCC"]
@@ -29,7 +37,8 @@ async def b_setup_registration(data: CameraInfo):
         already_exist_channel_ids=coll.count_documents({"channelId":channel_id})
         if already_exist_channel_ids:
             return "Telegram group with same channel id already exists."
-        
+ 
+        await bot.send_message(chat_id=channel_id, text=f"Service successfully installed and acivated within your creatged group: {data.telegramGroupName}", read_timeout=TIMEOUT, write_timeout=TIMEOUT)
         d_dict["channelId"] = channel_id
         d_dict["telegramGroupName"] = data.telegramGroupName
         d_dict["isActive"] = True
