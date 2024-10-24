@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from pymongo import MongoClient
 import datetime
 import json
-from schemas.taskManagement import CameraInfo
+from schemas.taskManagement import CameraInfo,ContactForm
 import requests
 from config import settings
 import telegram
@@ -70,6 +70,23 @@ async def get_camera_credentials(email: str, password: str):
     # send the data to mongodb
     res = b_get_camera_credentials(email, password)
     return res
+
+
+# QUERY
+# Define your API route for form submission
+@router.post("/submit-contact/")
+async def submit_contact(form_data: ContactForm):
+    try:
+        db = client["UUAABBCC"]
+        coll = db["queryInfo"]
+        d_dict = form_data.dict()
+        d_dict["isActive"] = True
+        d_dict["createdDateTime"] = datetime.datetime.now()
+        coll.insert_one(d_dict)
+        return {"status": True}
+    except Exception as e:
+        return {"error"}
+
 
 
 # @router.get("/get_tele_channel_id")
