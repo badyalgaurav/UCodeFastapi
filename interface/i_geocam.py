@@ -10,7 +10,7 @@ from telegram.request import HTTPXRequest
 
 router = APIRouter(prefix="/geocam", tags=["geocam"])
 MONGODB_CONN_STR =settings.MONGODB_CONN_STR
-TELEGRAM_BOT_URL=settings.TELE_BOT_TOKEN
+TELEGRAM_BOT_URL=settings.TELE_BOT_URL
 
 
 # Connection to MongoDB
