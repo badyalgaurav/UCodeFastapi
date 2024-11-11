@@ -9,8 +9,8 @@ import telegram
 from telegram.request import HTTPXRequest
 
 router = APIRouter(prefix="/geocam", tags=["geocam"])
-MONGODB_CONN_STR = "mongodb://interx:interx%40504@server.interxlab.io:15115/admin"
-TELEGRAM_BOT_URL=f"https://api.telegram.org/bot{settings.TELE_BOT_TOKEN}/getUpdates"
+MONGODB_CONN_STR =settings.MONGODB_CONN_STR
+TELEGRAM_BOT_URL=settings.TELE_BOT_TOKEN
 
 
 # Connection to MongoDB

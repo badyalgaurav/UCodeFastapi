@@ -5,8 +5,9 @@ from bson.objectid import ObjectId
 from interface.interfaces import router as api_router
 from fastapi.middleware.cors import CORSMiddleware
 from pymongo import MongoClient
-# from config import settings
-MONGODB_CONN_STR = "mongodb://interx:interx%40504@server.interxlab.io:15115/admin"
+from config import settings
+MONGODB_CONN_STR =settings.MONGODB_CONN_STR
+# MONGODB_CONN_STR = "mongodb://interx:interx%40504@server.interxlab.io:15115/admin"
 
 # Connection to MongoDB
 client = MongoClient(MONGODB_CONN_STR)
