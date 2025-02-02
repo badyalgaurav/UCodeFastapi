@@ -1,6 +1,8 @@
+from typing import Optional
 from fastapi import APIRouter
 from pymongo import MongoClient
 import datetime
+import pandas as pd
 import json
 from schemas.taskManagement import CameraInfo,ContactForm
 import requests
@@ -116,4 +118,17 @@ async def get_tele_channel_id(telegram_group_name: str):
     except Exception as e:
         # Handle any exceptions that may occur during the request
         print(f'An error occurred: {e}')
+    return res
+
+@router.get("/get_ai_type")
+async def get_ai_type(service_type: Optional[str] = None):
+    res = {"data": None, "message": "MSG_99"}
+    db = client["UUAABBCC"]
+    coll = db["aiType"]
+    try:
+        df = pd.DataFrame(coll.find({}))
+        df["_id"] = df["_id"].astype(str)
+        res["data"] = json.loads(df.to_json(orient="records"))
+    except Exception as e:
+        print(f"error {e}")
     return res
