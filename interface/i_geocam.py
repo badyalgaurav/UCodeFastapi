@@ -129,6 +129,7 @@ async def get_ai_type(service_type: Optional[str] = None):
         df = pd.DataFrame(coll.find({}))
         df["_id"] = df["_id"].astype(str)
         res["data"] = json.loads(df.to_json(orient="records"))
+        res["message"]="MSG_100"
     except Exception as e:
         print(f"error {e}")
     return res
