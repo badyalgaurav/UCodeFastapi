@@ -94,7 +94,7 @@ async def submit_contact(form_data: ContactForm):
 
 @router.get("/get_tele_channel_id_by_name")
 async def get_tele_channel_id_by_name(telegram_group_name: str):
-    res = {"msg": "MSG_99", "data": None}
+    res = {"msg": "MSG_99", "data": "group is not found or already taken. Try again later with different name."}
     db = client["UUAABBCC"]
     coll = db["accountInfo"]
     channel_id = await get_tele_channel_id(telegram_group_name)
