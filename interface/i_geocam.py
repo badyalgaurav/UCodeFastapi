@@ -4,24 +4,24 @@ from pymongo import MongoClient
 import datetime
 import pandas as pd
 import json
-from schemas.taskManagement import CameraInfo,ContactForm
+from schemas.taskManagement import CameraInfo, ContactForm
 import requests
 from config import settings
 import telegram
 from telegram.request import HTTPXRequest
 
 router = APIRouter(prefix="/geocam", tags=["geocam"])
-MONGODB_CONN_STR =settings.MONGODB_CONN_STR
-TELEGRAM_BOT_URL=settings.TELE_BOT_URL
-
+MONGODB_CONN_STR = settings.MONGODB_CONN_STR
+TELEGRAM_BOT_URL = settings.TELE_BOT_URL
 
 # Connection to MongoDB
 client = MongoClient(MONGODB_CONN_STR)
-trequest = HTTPXRequest(connection_pool_size=20)
-bot = telegram.Bot(token=f'{settings.TELE_BOT_TOKEN}', request=trequest)
+t_request = HTTPXRequest(connection_pool_size=20)
+bot = telegram.Bot(token=f'{settings.TELE_BOT_TOKEN}', request=t_request)
+
+TIMEOUT = 100000
 
 
-TIMEOUT=100000
 async def b_setup_registration(data: CameraInfo):
     # database
     db = client["UUAABBCC"]
@@ -30,17 +30,18 @@ async def b_setup_registration(data: CameraInfo):
     parse_camera_info = json.loads(d_dict["cameraInfo"])
     d_dict["cameraInfo"] = parse_camera_info
 
-    acc_alr_exists=coll.find_one({"cEmail":data.cEmail})
+    acc_alr_exists = coll.find_one({"cEmail": data.cEmail})
     if acc_alr_exists:
         return "account with same email already exists. Try different email for the customer."
 
-    channel_id= await get_tele_channel_id(telegram_group_name=data.telegramGroupName)
+    channel_id = await get_tele_channel_id(telegram_group_name=data.telegramGroupName)
     if channel_id:
-        already_exist_channel_ids=coll.count_documents({"channelId":channel_id})
+        already_exist_channel_ids = coll.count_documents({"channelId": channel_id})
         if already_exist_channel_ids:
             return "Telegram group with same channel id already exists."
- 
-        await bot.send_message(chat_id=channel_id, text=f"Service successfully installed and acivated within your creatged group: {data.telegramGroupName}", read_timeout=TIMEOUT, write_timeout=TIMEOUT)
+
+        await bot.send_message(chat_id=channel_id, text=f"Service successfully installed and acivated within your creatged group: {data.telegramGroupName}",
+                               read_timeout=TIMEOUT, write_timeout=TIMEOUT)
         d_dict["channelId"] = channel_id
         d_dict["telegramGroupName"] = data.telegramGroupName
         d_dict["isActive"] = True
@@ -50,6 +51,7 @@ async def b_setup_registration(data: CameraInfo):
         return "successfully inserted"
     else:
         return "Telegram group with the given name not created or the AI bot is never introduce in group."
+
 
 def b_get_camera_credentials(email: str, password: str):
     # database
@@ -63,7 +65,7 @@ def b_get_camera_credentials(email: str, password: str):
 @router.post("/setup_registration")
 async def setup_registration(data: CameraInfo):
     # send the data to mongodb
-    res=await b_setup_registration(data)
+    res = await b_setup_registration(data)
     return {"status": res}
 
 
@@ -89,6 +91,24 @@ async def submit_contact(form_data: ContactForm):
     except Exception as e:
         return {"error"}
 
+
+@router.get("/get_tele_channel_id_by_name")
+async def get_tele_channel_id_by_name(telegram_group_name: str):
+    res = {"msg": "MSG_99", "data": None}
+    db = client["UUAABBCC"]
+    coll = db["accountInfo"]
+    channel_id = await get_tele_channel_id(telegram_group_name)
+
+    if channel_id:
+        already_exist_channel_ids = coll.count_documents({"channelId": channel_id})
+        if already_exist_channel_ids:
+            res = {"msg": "Telegram group with same channel id already exists.", "data": None}
+            return res
+        await bot.send_message(chat_id=channel_id, text=f"Service successfully update to : {telegram_group_name} group.",
+                               read_timeout=TIMEOUT, write_timeout=TIMEOUT)
+        return {"msg": "MSG_100", "data": channel_id}
+
+    return res
 
 
 # @router.get("/get_tele_channel_id")
@@ -120,6 +140,7 @@ async def get_tele_channel_id(telegram_group_name: str):
         print(f'An error occurred: {e}')
     return res
 
+
 @router.get("/get_ai_type")
 async def get_ai_type(service_type: Optional[str] = None):
     res = {"data": None, "message": "MSG_99"}
@@ -129,7 +150,7 @@ async def get_ai_type(service_type: Optional[str] = None):
         df = pd.DataFrame(coll.find({}))
         df["_id"] = df["_id"].astype(str)
         res["data"] = json.loads(df.to_json(orient="records"))
-        res["message"]="MSG_100"
+        res["message"] = "MSG_100"
     except Exception as e:
         print(f"error {e}")
     return res
