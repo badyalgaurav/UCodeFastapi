@@ -29,6 +29,9 @@ class CameraInfo(BaseModel):
     cAddress: Optional[str] = None
     cCountry: Optional[str] = None
     cPassword: Optional[str] = None
+
+    anydeskInfo: Optional[str] = None
+
     telegramGroupName: Optional[str] = None
 
     eName: Optional[str] = None
